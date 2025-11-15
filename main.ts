@@ -31,7 +31,9 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 
 	display(): void {
 		const { containerEl } = this;
-    
+
+		containerEl.empty();
+
 		new Setting(containerEl)
 			.setName("Archive property name")
 			.setDesc(
