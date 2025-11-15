@@ -12,10 +12,12 @@ import {
 
 interface NoteArchiverSettings {
 	archivePropertyName: string;
+	showOnlyArchived: boolean;
 }
 
 const DEFAULT_SETTINGS: NoteArchiverSettings = {
 	archivePropertyName: "archived_at",
+	showOnlyArchived: false,
 };
 
 // Settings tab for the plugin
@@ -51,6 +53,44 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 						this.plugin.hideArchivedFiles();
 					}),
 			);
+
+		new Setting(containerEl)
+			.setName("Current view mode")
+			.setDesc(
+				"Toggle between showing only unarchived files (normal) or only archived files",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showOnlyArchived)
+					.onChange(async (value) => {
+						this.plugin.settings.showOnlyArchived = value;
+						await this.plugin.saveSettings();
+
+						// Update command name dynamically
+						const command = (this.plugin.app as any).commands
+							.commands[
+							"obsidian-note-archiver:toggle-archive-view"
+						];
+						if (command) {
+							command.name = value
+								? "Show only unarchived files"
+								: "Show only archived files";
+						}
+
+						const viewMode = value ? "archive" : "normal";
+						new Notice(`Switched to ${viewMode} view`);
+
+						this.plugin.hideArchivedFiles();
+					}),
+			)
+			.then((setting) => {
+				setting.nameEl.createEl("span", {
+					text: this.plugin.settings.showOnlyArchived
+						? " (Archive view)"
+						: " (Normal view)",
+					cls: "setting-item-description",
+				});
+			});
 	}
 }
 
@@ -102,7 +142,7 @@ export default class NoteArchiverPlugin extends Plugin {
 	}
 
 	/**
-	 * Hides archived files in the file explorer based on the archive property.
+	 * Hides archived or unarchived files in the file explorer based on the current view mode.
 	 */
 	hideArchivedFiles() {
 		const fileExplorers =
@@ -119,7 +159,13 @@ export default class NoteArchiverPlugin extends Plugin {
 						const isArchived = this.isFileArchived(file);
 
 						if (fileItem.selfEl) {
-							if (isArchived) {
+							// In archive view mode: hide unarchived files
+							// In normal mode: hide archived files
+							const shouldHide = this.settings.showOnlyArchived
+								? !isArchived
+								: isArchived;
+
+							if (shouldHide) {
 								fileItem.selfEl.style.display = "none";
 							} else {
 								fileItem.selfEl.style.display = "";
@@ -140,6 +186,41 @@ export default class NoteArchiverPlugin extends Plugin {
 
 		// Add settings tab
 		this.addSettingTab(new NoteArchiverSettingTab(this.app, this));
+
+		// Add command to toggle between archive and normal view
+		this.addCommand({
+			id: "toggle-archive-view",
+			name: this.settings.showOnlyArchived
+				? "Show only unarchived files"
+				: "Show only archived files",
+			checkCallback: (checking: boolean) => {
+				if (checking) {
+					return true;
+				}
+
+				this.settings.showOnlyArchived =
+					!this.settings.showOnlyArchived;
+				this.saveSettings();
+
+				// Update command name dynamically
+				const command = (this.app as any).commands.commands[
+					"obsidian-note-archiver:toggle-archive-view"
+				];
+				if (command) {
+					command.name = this.settings.showOnlyArchived
+						? "Show only unarchived files"
+						: "Show only archived files";
+				}
+
+				const viewMode = this.settings.showOnlyArchived
+					? "archive"
+					: "normal";
+				new Notice(`Switched to ${viewMode} view`);
+
+				this.hideArchivedFiles();
+				return true;
+			},
+		});
 
 		// Register event to hide archived files in file explorer
 		this.registerEvent(
