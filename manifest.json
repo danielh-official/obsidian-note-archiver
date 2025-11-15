@@ -3,7 +3,7 @@
 	"name": "Note Archiver",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Archive notes by adding a date property that hides them from the file explorer.",
+	"description": "Archive notes by adding a date/time property that hides them from the file explorer.",
 	"author": "danielh-official",
 	"authorUrl": "https://github.com/danielh-official",
 	"isDesktopOnly": false
