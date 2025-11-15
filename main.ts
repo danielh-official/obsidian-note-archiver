@@ -70,15 +70,7 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 						this.plugin.hideArchivedFiles();
 						this.plugin.refreshToggleCommand();
 					}),
-			)
-			.then((setting) => {
-				setting.nameEl.createEl("span", {
-					text: this.plugin.settings.showOnlyArchived
-						? " (Archive view)"
-						: " (Normal view)",
-					cls: "setting-item-description",
-				});
-			});
+			);
 	}
 }
 
