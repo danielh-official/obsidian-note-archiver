@@ -25,7 +25,25 @@ An Obsidian plugin that archives notes by hiding them from the file explorer bas
    - Go to Settings → Note Archiver
    - Change the archive property name if needed (default: `archived_at`)
 
-## First time developing plugins?
+## Installation
+
+### From Obsidian Community Plugins (Recommended)
+
+1. Open Settings in Obsidian
+2. Go to Community Plugins and disable Safe Mode
+3. Click Browse and search for "Note Archiver"
+4. Click Install, then Enable
+
+### Manual Installation
+
+1. Download the latest release from GitHub
+2. Extract `main.js`, `manifest.json`, and `styles.css` into your vault's `.obsidian/plugins/note-archiver/` folder
+3. Reload Obsidian
+4. Enable the plugin in Settings → Community Plugins
+
+## Development
+
+### First time developing plugins?
 
 Quick starting guide for new plugin devs:
 
