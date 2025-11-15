@@ -1,16 +1,29 @@
-# Obsidian Sample Plugin
+# Note Archiver
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian plugin that archives notes by hiding them from the file explorer based on a date property.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- **Archive Notes**: Add a date property to notes to archive them
+- **Hide Archived Files**: Automatically hides archived notes from the file explorer
+- **Context Menu Integration**: Right-click on any note in the file explorer to access the "Archive" option
+- **Editor Menu Integration**: Access the "Archive" option from the three-dot menu in file views
+- **Configurable Property Name**: Customize the frontmatter property name used for archiving (default: `archived_at`)
+
+## How to Use
+
+1. **Archive a Note**:
+   - Right-click on any note in the file explorer and select "Archive"
+   - Or, click the three-dot menu in an open note's file view and select "Archive"
+   - The current date will be automatically added to the note's frontmatter
+
+2. **View Archived Notes**:
+   - Archived notes are hidden from the file explorer by default
+   - To view an archived note again, remove or clear the archive property from the frontmatter
+
+3. **Configure Settings**:
+   - Go to Settings → Note Archiver
+   - Change the archive property name if needed (default: `archived_at`)
 
 ## First time developing plugins?
 
