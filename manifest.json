@@ -1,6 +1,6 @@
 {
-	"id": "note-archiver",
-	"name": "Note Archiver",
+	"id": "file-property-note-archiver",
+	"name": "Note Archiver (File Property)",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Archive notes by adding a date/time property that hides them from the file explorer.",
