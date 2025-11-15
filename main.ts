@@ -66,21 +66,11 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 						this.plugin.settings.showOnlyArchived = value;
 						await this.plugin.saveSettings();
 
-						// Update command name dynamically
-						const command = (this.plugin.app as any).commands
-							.commands[
-							"obsidian-note-archiver:toggle-archive-view"
-						];
-						if (command) {
-							command.name = value
-								? "Show only unarchived files"
-								: "Show only archived files";
-						}
-
 						const viewMode = value ? "archive" : "normal";
 						new Notice(`Switched to ${viewMode} view`);
 
 						this.plugin.hideArchivedFiles();
+						this.plugin.refreshToggleCommand();
 					}),
 			)
 			.then((setting) => {
@@ -97,6 +87,49 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 // Main plugin class
 export default class NoteArchiverPlugin extends Plugin {
 	settings: NoteArchiverSettings;
+	private toggleCommandId = "toggle-archive-view";
+
+	/**
+	 * Registers the toggle archive view command with dynamic naming based on current view mode.
+	 */
+	registerToggleCommand() {
+		this.addCommand({
+			id: this.toggleCommandId,
+			name: this.settings.showOnlyArchived
+				? "Show only unarchived files"
+				: "Show only archived files",
+			callback: () => {
+				this.settings.showOnlyArchived =
+					!this.settings.showOnlyArchived;
+				this.saveSettings();
+
+				const viewMode = this.settings.showOnlyArchived
+					? "archive"
+					: "normal";
+				new Notice(`Switched to ${viewMode} view`);
+
+				this.hideArchivedFiles();
+				this.refreshToggleCommand();
+			},
+		});
+	}
+
+	/**
+	 * Refreshes the toggle command by removing and re-adding it with updated name.
+	 */
+	refreshToggleCommand() {
+		const commands = (this.app as any).commands;
+		const fullCommandId = `${this.manifest.id}:${this.toggleCommandId}`;
+
+		// Remove the old command
+		if (commands.commands[fullCommandId]) {
+			delete commands.commands[fullCommandId];
+			commands.removeCommand(fullCommandId);
+		}
+
+		// Re-register with updated name
+		this.registerToggleCommand();
+	}
 
 	/**
 	 * Archives a file by adding the archive property to its frontmatter.
@@ -188,39 +221,7 @@ export default class NoteArchiverPlugin extends Plugin {
 		this.addSettingTab(new NoteArchiverSettingTab(this.app, this));
 
 		// Add command to toggle between archive and normal view
-		this.addCommand({
-			id: "toggle-archive-view",
-			name: this.settings.showOnlyArchived
-				? "Show only unarchived files"
-				: "Show only archived files",
-			checkCallback: (checking: boolean) => {
-				if (checking) {
-					return true;
-				}
-
-				this.settings.showOnlyArchived =
-					!this.settings.showOnlyArchived;
-				this.saveSettings();
-
-				// Update command name dynamically
-				const command = (this.app as any).commands.commands[
-					"obsidian-note-archiver:toggle-archive-view"
-				];
-				if (command) {
-					command.name = this.settings.showOnlyArchived
-						? "Show only unarchived files"
-						: "Show only archived files";
-				}
-
-				const viewMode = this.settings.showOnlyArchived
-					? "archive"
-					: "normal";
-				new Notice(`Switched to ${viewMode} view`);
-
-				this.hideArchivedFiles();
-				return true;
-			},
-		});
+		this.registerToggleCommand();
 
 		// Register event to hide archived files in file explorer
 		this.registerEvent(
