@@ -80,6 +80,57 @@ export default class NoteArchiverPlugin extends Plugin {
 		this.hideArchivedFiles();
 	}
 
+	/**
+	 * Checks if a file is archived based on the archive property in frontmatter.
+	 * @param file
+	 * @returns
+	 */
+	isFileArchived(file: TFile): boolean {
+		const cache = this.app.metadataCache.getFileCache(file);
+		if (!cache?.frontmatter) {
+			return false;
+		}
+
+		const archiveValue =
+			cache.frontmatter[this.settings.archivePropertyName];
+		// Check if the property exists and has a value (not null, undefined, or empty)
+		return (
+			archiveValue !== null &&
+			archiveValue !== undefined &&
+			archiveValue !== ""
+		);
+	}
+
+	/**
+	 * Hides archived files in the file explorer based on the archive property.
+	 */
+	hideArchivedFiles() {
+		const fileExplorers =
+			this.app.workspace.getLeavesOfType("file-explorer");
+
+		fileExplorers.forEach((leaf) => {
+			const fileExplorer = (leaf.view as any).fileItems;
+			if (fileExplorer) {
+				Object.keys(fileExplorer).forEach((path) => {
+					const fileItem = fileExplorer[path];
+					const file = this.app.vault.getAbstractFileByPath(path);
+
+					if (file instanceof TFile && file.extension === "md") {
+						const isArchived = this.isFileArchived(file);
+
+						if (fileItem.selfEl) {
+							if (isArchived) {
+								fileItem.selfEl.style.display = "none";
+							} else {
+								fileItem.selfEl.style.display = "";
+							}
+						}
+					}
+				});
+			}
+		});
+	}
+
 	async onload() {
 		this.settings = Object.assign(
 			{},
@@ -197,56 +248,5 @@ export default class NoteArchiverPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-
-	/**
-	 * Checks if a file is archived based on the archive property in frontmatter.
-	 * @param file
-	 * @returns
-	 */
-	isFileArchived(file: TFile): boolean {
-		const cache = this.app.metadataCache.getFileCache(file);
-		if (!cache?.frontmatter) {
-			return false;
-		}
-
-		const archiveValue =
-			cache.frontmatter[this.settings.archivePropertyName];
-		// Check if the property exists and has a value (not null, undefined, or empty)
-		return (
-			archiveValue !== null &&
-			archiveValue !== undefined &&
-			archiveValue !== ""
-		);
-	}
-
-	/**
-	 * Hides archived files in the file explorer based on the archive property.
-	 */
-	hideArchivedFiles() {
-		const fileExplorers =
-			this.app.workspace.getLeavesOfType("file-explorer");
-
-		fileExplorers.forEach((leaf) => {
-			const fileExplorer = (leaf.view as any).fileItems;
-			if (fileExplorer) {
-				Object.keys(fileExplorer).forEach((path) => {
-					const fileItem = fileExplorer[path];
-					const file = this.app.vault.getAbstractFileByPath(path);
-
-					if (file instanceof TFile && file.extension === "md") {
-						const isArchived = this.isFileArchived(file);
-
-						if (fileItem.selfEl) {
-							if (isArchived) {
-								fileItem.selfEl.style.display = "none";
-							} else {
-								fileItem.selfEl.style.display = "";
-							}
-						}
-					}
-				});
-			}
-		});
 	}
 }
