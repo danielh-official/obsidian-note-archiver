@@ -189,9 +189,9 @@ export default class NoteArchiverPlugin extends Plugin {
 								: isArchived;
 
 							if (shouldHide) {
-								fileItem.selfEl.style.display = "none";
+								fileItem.selfEl.classList.add("hidden");
 							} else {
-								fileItem.selfEl.style.display = "";
+								fileItem.selfEl.classList.remove("hidden");
 							}
 						}
 					}
@@ -311,7 +311,7 @@ export default class NoteArchiverPlugin extends Plugin {
 				Object.keys(fileExplorer).forEach((path) => {
 					const fileItem = fileExplorer[path];
 					if (fileItem.selfEl) {
-						fileItem.selfEl.style.display = "";
+						fileItem.selfEl.classList.remove("hidden");
 					}
 				});
 			}
