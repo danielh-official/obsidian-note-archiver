@@ -1,6 +1,6 @@
-# Note Archiver
+# Obsidian Note Archiver (w/ `archived_at` File Property)
 
-An Obsidian plugin that archives notes by hiding them from the file explorer based on a date/time file property (e.g., archived_at).
+An Obsidian plugin that provides a shortcut to archiving notes via adding a configurable "archived_at" property.
 
 ![screenshot](images/screenshot.png)
 
