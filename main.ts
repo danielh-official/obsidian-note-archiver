@@ -12,12 +12,10 @@ import {
 
 interface NoteArchiverSettings {
 	archivePropertyName: string;
-	showOnlyArchived: boolean;
 }
 
 const DEFAULT_SETTINGS: NoteArchiverSettings = {
 	archivePropertyName: "archived_at",
-	showOnlyArchived: false,
 };
 
 // Settings tab for the plugin
@@ -47,28 +45,6 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 						this.plugin.settings.archivePropertyName =
 							value || "archived_at";
 						await this.plugin.saveSettings();
-						// Refresh file hiding after changing property name
-						this.plugin.hideArchivedFiles();
-					}),
-			);
-
-		new Setting(containerEl)
-			.setName("Current view mode")
-			.setDesc(
-				"Toggle between showing only unarchived files (normal) or only archived files",
-			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.showOnlyArchived)
-					.onChange(async (value) => {
-						this.plugin.settings.showOnlyArchived = value;
-						await this.plugin.saveSettings();
-
-						const viewMode = value ? "archive" : "normal";
-						new Notice(`Switched to ${viewMode} view`);
-
-						this.plugin.hideArchivedFiles();
-						this.plugin.refreshToggleCommand();
 					}),
 			);
 	}
@@ -77,49 +53,6 @@ class NoteArchiverSettingTab extends PluginSettingTab {
 // Main plugin class
 export default class NoteArchiverPlugin extends Plugin {
 	settings: NoteArchiverSettings;
-	private toggleCommandId = "toggle-archive-view";
-
-	/**
-	 * Registers the toggle archive view command with dynamic naming based on current view mode.
-	 */
-	registerToggleCommand() {
-		this.addCommand({
-			id: this.toggleCommandId,
-			name: this.settings.showOnlyArchived
-				? "Show only unarchived files"
-				: "Show only archived files",
-			callback: () => {
-				this.settings.showOnlyArchived =
-					!this.settings.showOnlyArchived;
-				this.saveSettings();
-
-				const viewMode = this.settings.showOnlyArchived
-					? "archive"
-					: "normal";
-				new Notice(`Switched to ${viewMode} view`);
-
-				this.hideArchivedFiles();
-				this.refreshToggleCommand();
-			},
-		});
-	}
-
-	/**
-	 * Refreshes the toggle command by removing and re-adding it with updated name.
-	 */
-	refreshToggleCommand() {
-		const commands = (this.app as any).commands;
-		const fullCommandId = `${this.manifest.id}:${this.toggleCommandId}`;
-
-		// Remove the old command
-		if (commands.commands[fullCommandId]) {
-			delete commands.commands[fullCommandId];
-			commands.removeCommand(fullCommandId);
-		}
-
-		// Re-register with updated name
-		this.registerToggleCommand();
-	}
 
 	/**
 	 * Archives a file by adding the archive property to its frontmatter.
@@ -138,9 +71,6 @@ export default class NoteArchiverPlugin extends Plugin {
 		);
 
 		new Notice(`File archived: ${file.basename}`);
-
-		// Trigger hiding of archived files
-		this.hideArchivedFiles();
 	}
 
 	/**
@@ -164,42 +94,6 @@ export default class NoteArchiverPlugin extends Plugin {
 		);
 	}
 
-	/**
-	 * Hides archived or unarchived files in the file explorer based on the current view mode.
-	 */
-	hideArchivedFiles() {
-		const fileExplorers =
-			this.app.workspace.getLeavesOfType("file-explorer");
-
-		fileExplorers.forEach((leaf) => {
-			const fileExplorer = (leaf.view as any).fileItems;
-			if (fileExplorer) {
-				Object.keys(fileExplorer).forEach((path) => {
-					const fileItem = fileExplorer[path];
-					const file = this.app.vault.getAbstractFileByPath(path);
-
-					if (file instanceof TFile && file.extension === "md") {
-						const isArchived = this.isFileArchived(file);
-
-						if (fileItem.selfEl) {
-							// In archive view mode: hide unarchived files
-							// In normal mode: hide archived files
-							const shouldHide = this.settings.showOnlyArchived
-								? !isArchived
-								: isArchived;
-
-							if (shouldHide) {
-								fileItem.selfEl.classList.add("hidden");
-							} else {
-								fileItem.selfEl.classList.remove("hidden");
-							}
-						}
-					}
-				});
-			}
-		});
-	}
-
 	async onload() {
 		this.settings = Object.assign(
 			{},
@@ -209,30 +103,6 @@ export default class NoteArchiverPlugin extends Plugin {
 
 		// Add settings tab
 		this.addSettingTab(new NoteArchiverSettingTab(this.app, this));
-
-		// Add command to toggle between archive and normal view
-		this.registerToggleCommand();
-
-		// Register event to hide archived files in file explorer
-		this.registerEvent(
-			this.app.workspace.on("layout-change", () => {
-				this.hideArchivedFiles();
-			}),
-		);
-
-		// Register event to hide archived files when vault changes
-		this.registerEvent(
-			this.app.vault.on("modify", () => {
-				this.hideArchivedFiles();
-			}),
-		);
-
-		// Register event to hide archived files when metadata changes
-		this.registerEvent(
-			this.app.metadataCache.on("changed", () => {
-				this.hideArchivedFiles();
-			}),
-		);
 
 		// Add context menu item for file explorer (right-click)
 		this.registerEvent(
@@ -255,13 +125,10 @@ export default class NoteArchiverPlugin extends Plugin {
 											},
 										);
 
-										new Notice(
-											`File unarchived: ${file.basename}`,
-										);
-
-										// Trigger hiding of archived files
-										this.hideArchivedFiles();
-									});
+									new Notice(
+										`File unarchived: ${file.basename}`,
+									);
+								});
 							} else {
 								item.setTitle("Archive")
 									.setIcon("archive")
@@ -293,29 +160,6 @@ export default class NoteArchiverPlugin extends Plugin {
 				},
 			),
 		);
-
-		// Hide archived files on initial load
-		this.app.workspace.onLayoutReady(() => {
-			this.hideArchivedFiles();
-		});
-	}
-
-	onunload() {
-		// Show all files again when plugin is unloaded
-		const fileExplorers =
-			this.app.workspace.getLeavesOfType("file-explorer");
-
-		fileExplorers.forEach((leaf) => {
-			const fileExplorer = (leaf.view as any).fileItems;
-			if (fileExplorer) {
-				Object.keys(fileExplorer).forEach((path) => {
-					const fileItem = fileExplorer[path];
-					if (fileItem.selfEl) {
-						fileItem.selfEl.classList.remove("hidden");
-					}
-				});
-			}
-		});
 	}
 
 	async saveSettings() {
