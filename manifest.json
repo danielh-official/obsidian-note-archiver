@@ -1,7 +1,7 @@
 {
 	"id": "file-property-note-archiver",
 	"name": "Note Archiver (File Property)",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"minAppVersion": "0.15.0",
 	"description": "Provides a shortcut for archiving notes via adding a configurable \"archived_at\" property.",
 	"author": "danielh-official",
