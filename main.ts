@@ -125,10 +125,10 @@ export default class NoteArchiverPlugin extends Plugin {
 											},
 										);
 
-									new Notice(
-										`File unarchived: ${file.basename}`,
-									);
-								});
+										new Notice(
+											`File unarchived: ${file.basename}`,
+										);
+									});
 							} else {
 								item.setTitle("Archive")
 									.setIcon("archive")
